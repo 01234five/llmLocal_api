@@ -4,3 +4,6 @@ On a web browser type : http://127.0.0.1:5110/api/prompt?prompt_user=How many st
 
 
 change "prompt_user=" to desired query
+
+
+tested on Linux
