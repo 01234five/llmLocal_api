@@ -10,6 +10,8 @@ from transformers import (
     pipeline,
 )
 from langchain.vectorstores import Chroma
+import chromadb
+import Constants as _constants
 def LoadModel(device_type, model_id, model_basename=None):
     print(f"Loading Model: {model_id}, on: {device_type}")
     _model=None
@@ -92,3 +94,5 @@ def DatabaseReturn(directory,embeddings,settings):
         client_settings=settings,
     )
 
+def GetDatabaseClient():
+    chroma_client = chromadb.HttpClient(host="chroma", port = 8000, settings=_constants.CHROMA_SETTINGS)
