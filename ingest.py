@@ -1,3 +1,9 @@
+import torch
+from langchain.embeddings import HuggingFaceInstructEmbeddings
+import Constants as _constants
+import GlobalFunctions as global_functions
+
+
 import logging
 import os
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
@@ -8,9 +14,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from typing import List
 from Constants import (
-    CHROMA_SETTINGS,
-    PERSIST_DIRECTORY,
-    SOURCE_DIRECTORY,
     EMBEDDING_MODEL_NAME
 )
 from langchain.document_loaders import TextLoader, PDFMinerLoader, CSVLoader
@@ -32,32 +35,33 @@ def load_documents(source_dir: str) -> List[Document]:
     return [load_single_document(f"{source_dir}/{file_path}") for file_path in all_files if file_path[-4:] in ['.txt', '.pdf', '.csv'] ]
 
 
-def main(device_type):
+
+
+def main(_device_type,source_directory):
     # Load documents and split in chunks
-    print(f"Loading documents from {SOURCE_DIRECTORY}")
-    documents = load_documents(SOURCE_DIRECTORY)
+    print(f"Loading documents from {source_directory}")
+    documents = load_documents(source_directory)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     texts = text_splitter.split_documents(documents)
-    print(f"Loaded {len(documents)} documents from {SOURCE_DIRECTORY}")
+    print(f"Loaded {len(documents)} documents from {source_directory}")
     print(f"Split into {len(texts)} chunks of text")
-
     # Create embeddings
     embeddings = HuggingFaceInstructEmbeddings(
         model_name=EMBEDDING_MODEL_NAME,
         model_kwargs={"device": device_type},
     )
-    
-    db = Chroma.from_documents(texts, embeddings, persist_directory=PERSIST_DIRECTORY, client_settings=CHROMA_SETTINGS)
-    db.add_documents
+    db = global_functions.DatabaseReturn(_constants.PERSIST_DIRECTORY,HuggingFaceInstructEmbeddings(model_name=_constants.EMBEDDING_MODEL_NAME, model_kwargs={"device": _device_type}),_constants.CHROMA_SETTINGS) 
+    # Add the new documents to the existing Chroma database
+    db.add_documents(texts)
     db.persist()
     db = None
     print("Completed.")
-
-
 if __name__ == "__main__":
     device_type=""
     if torch.cuda.is_available():
         device_type="cuda"  
     else: 
         device_type="cpu",
-    main(device_type)
+    _rd=os.path.dirname(os.path.realpath(__file__))
+    _sd=f"{_rd}/documents/document1/"
+    main(device_type,_sd)
